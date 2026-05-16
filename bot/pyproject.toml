@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "foodorder-bot"
+version = "0.1.0"
+description = "FoodOrder TMA demo bot (aiogram 3 polling)"
+requires-python = ">=3.11"
+dependencies = [
+    "aiogram>=3.7",
+    "pydantic-settings>=2.4",
+]
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
