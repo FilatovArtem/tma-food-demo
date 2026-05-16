@@ -1,0 +1,60 @@
+name: Deploy to nixos-home-server
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  GH_REPO: ${{ github.repository }}
+
+jobs:
+  deploy:
+    name: SSH deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Trigger remote deploy script
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          REPO_SLUG: ${{ env.GH_REPO }}
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          # Pinned host fingerprint prevents MITM; populate via `ssh-keyscan -H <host>`.
+          fingerprint: ${{ secrets.DEPLOY_HOST_FINGERPRINT }}
+          command_timeout: 15m
+          script_stop: true
+          envs: REPO_SLUG,REPO_URL,DEPLOY_BRANCH,DEPLOY_PATH
+          script: |
+            set -euo pipefail
+            REPO_URL="${REPO_URL:-https://github.com/${REPO_SLUG}.git}"
+            DEPLOY_BRANCH="${DEPLOY_BRANCH:-main}"
+            DEPLOY_PATH="${DEPLOY_PATH:-/home/admin/tma-food-demo}"
+
+            if [ ! -d "$DEPLOY_PATH/.git" ]; then
+              echo "==> First deploy: cloning $REPO_URL → $DEPLOY_PATH"
+              mkdir -p "$(dirname "$DEPLOY_PATH")"
+              git clone --branch "$DEPLOY_BRANCH" "$REPO_URL" "$DEPLOY_PATH"
+            fi
+
+            cd "$DEPLOY_PATH"
+            echo "==> Fetching latest origin/$DEPLOY_BRANCH"
+            git fetch origin "$DEPLOY_BRANCH"
+            git reset --hard "origin/$DEPLOY_BRANCH"
+
+            if [ ! -f .env ]; then
+              echo "WARNING: $DEPLOY_PATH/.env not found."
+              echo "  Bot/backend will start but auth/AI/notify will not work."
+              echo "  Create it on the server with the required tokens (see docs/DEPLOY.md §3)."
+            fi
+
+            chmod +x scripts/deploy.sh
+            ./scripts/deploy.sh

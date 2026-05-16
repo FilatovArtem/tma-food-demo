@@ -1,0 +1,41 @@
+# Production overlay for deployment to nixos-home-server.
+#
+# Use with:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# Key differences from base compose:
+#   - All services use network_mode: host so backend/bot can reach the host's
+#     Xray HTTP proxy on 127.0.0.1:10808 (needed to bypass RU-side restrictions
+#     when calling api.telegram.org and api.openai.com).
+#   - Frontend nginx listens on host port 8080; Caddy on the host proxies
+#     foodorder.95.165.71.0.nip.io → 127.0.0.1:8080 with Let's Encrypt.
+#   - HTTP_PROXY/HTTPS_PROXY env wired into backend + bot (httpx trust_env +
+#     aiogram explicit proxy wiring read those vars).
+
+services:
+  backend:
+    network_mode: host
+    expose: !reset []
+    ports: !reset []
+    # Bind uvicorn to loopback only; Caddy + nginx are the only front-doors.
+    command: ["uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "8000"]
+    environment:
+      HTTP_PROXY: "http://127.0.0.1:10808"
+      HTTPS_PROXY: "http://127.0.0.1:10808"
+      NO_PROXY: "localhost,127.0.0.1,host.docker.internal"
+
+  bot:
+    network_mode: host
+    environment:
+      HTTP_PROXY: "http://127.0.0.1:10808"
+      HTTPS_PROXY: "http://127.0.0.1:10808"
+      NO_PROXY: "localhost,127.0.0.1"
+
+  frontend:
+    network_mode: host
+    ports: !reset []
+    expose: !reset []
+    volumes:
+      - ./frontend/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+    environment:
+      VITE_API_URL: "/api"

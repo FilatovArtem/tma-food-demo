@@ -1,0 +1,26 @@
+# Example Caddy reverse-proxy snippet for FoodOrder Mini App.
+#
+# Append to your /home/admin/nixos/configuration.nix (or import as a module)
+# and then run: sudo nixos-rebuild switch
+#
+# Let's Encrypt HTTP-01 challenge will provision the cert automatically
+# (router already forwards 80/443 to this host).
+#
+# The hostname uses nip.io wildcard DNS — replace with your own domain if you have one.
+
+{ config, ... }:
+
+{
+  services.caddy.virtualHosts."foodorder.95.165.71.0.nip.io" = {
+    extraConfig = ''
+      reverse_proxy 127.0.0.1:8080 {
+        header_up X-Real-IP {remote_host}
+      }
+
+      encode gzip
+      log {
+        output stdout
+      }
+    '';
+  };
+}

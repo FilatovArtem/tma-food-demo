@@ -91,9 +91,21 @@ Frontend type-check:
 cd frontend && npm install && npm run type-check
 ```
 
+## 🚢 Production deploy
+
+Авто-деплой на homelab NixOS-сервер через GitHub Actions:
+
+- push в `main` → GHA SSH-деплой → `docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build`
+- Caddy на сервере: HTTPS reverse-proxy с Let's Encrypt
+- Xray HTTP-proxy для обхода RU-блокировок Telegram/OpenAI
+- Host network mode для backend/bot + bound to 127.0.0.1 (доступ только через Caddy)
+
+Полная инструкция: **[docs/DEPLOY.md](docs/DEPLOY.md)** (GHA secrets, SSH ключи, Caddy vhost, troubleshooting).
+
 ## 📖 Документация
 
 - **[docs/SETUP.md](docs/SETUP.md)** — пошаговый setup с получением всех токенов
+- **[docs/DEPLOY.md](docs/DEPLOY.md)** — production deploy на NixOS-сервер через GHA
 - **[docs/CLIENT_DEMO.md](docs/CLIENT_DEMO.md)** — 60-секундный pitch для показа клиентам
 - **[specs/foodorder-mvp/spec.md](specs/foodorder-mvp/spec.md)** — функциональные требования
 - **[specs/foodorder-mvp/design.md](specs/foodorder-mvp/design.md)** — архитектура (выбор стэка, схемы, треки)
