@@ -11,4 +11,5 @@ def get_telegram_client() -> httpx.AsyncClient:
     return httpx.AsyncClient(
         base_url=f"https://api.telegram.org/bot{settings.bot_token}",
         timeout=10.0,
+        trust_env=True,
     )

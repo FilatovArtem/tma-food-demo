@@ -1,6 +1,8 @@
 import logging
+import os
 
 from aiogram import Bot, Dispatcher
+from aiogram.client.session.aiohttp import AiohttpSession
 
 from app.config import get_settings
 from app.handlers.start import router as start_router
@@ -8,8 +10,22 @@ from app.handlers.start import router as start_router
 log = logging.getLogger(__name__)
 
 
+def _resolve_proxy() -> str | None:
+    # aiogram does NOT read HTTP_PROXY automatically. Wire explicitly.
+    for key in ("HTTPS_PROXY", "https_proxy", "HTTP_PROXY", "http_proxy"):
+        value = os.environ.get(key)
+        if value:
+            return value
+    return None
+
+
 def build_bot() -> Bot:
     settings = get_settings()
+    proxy = _resolve_proxy()
+    if proxy:
+        log.info("bot.using_proxy", extra={"proxy": proxy})
+        session = AiohttpSession(proxy=proxy)
+        return Bot(token=settings.bot_token, session=session)
     return Bot(token=settings.bot_token)
 
 
