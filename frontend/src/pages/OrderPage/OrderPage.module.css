@@ -1,0 +1,121 @@
+.page {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 100vh;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.summary {
+  background: var(--secondary-bg);
+  padding: 12px 16px;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.summaryTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--hint);
+  margin: 0 0 4px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+}
+
+.summaryPrice {
+  font-weight: 500;
+}
+
+.summaryTotal {
+  font-size: 16px;
+  font-weight: 700;
+  padding-top: 8px;
+  margin-top: 4px;
+  border-top: 1px solid var(--separator);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--hint);
+}
+
+.input,
+.textarea {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--secondary-bg);
+  color: var(--text);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  font-size: 15px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 120ms ease;
+  min-height: 48px;
+}
+
+.input:focus,
+.textarea:focus {
+  border-color: var(--btn-bg);
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.error {
+  color: #e53935;
+  font-size: 13px;
+  margin: 0;
+}
+
+.submit {
+  border: none;
+  padding: 14px 20px;
+  background: var(--btn-bg);
+  color: var(--btn-text);
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 52px;
+  margin-top: 8px;
+  transition: opacity 120ms ease;
+}
+
+.submit:active:not(:disabled) {
+  opacity: 0.85;
+}
+
+.submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

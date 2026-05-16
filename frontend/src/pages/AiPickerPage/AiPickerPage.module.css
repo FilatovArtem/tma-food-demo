@@ -1,0 +1,98 @@
+.page {
+  padding: 16px;
+  padding-bottom: 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 100vh;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.hint {
+  font-size: 14px;
+  color: var(--hint);
+  margin: 0;
+}
+
+.inputRow {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.input {
+  flex: 1;
+  padding: 12px 14px;
+  background: var(--secondary-bg);
+  color: var(--text);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  font-size: 15px;
+  outline: none;
+  min-height: 48px;
+}
+
+.input:focus {
+  border-color: var(--btn-bg);
+}
+
+.searchBtn {
+  border: none;
+  padding: 0 18px;
+  background: var(--btn-bg);
+  color: var(--btn-text);
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 48px;
+  white-space: nowrap;
+  transition: opacity 120ms ease;
+}
+
+.searchBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.exampleChip {
+  border: 1px solid var(--separator);
+  padding: 6px 12px;
+  background: transparent;
+  color: var(--text);
+  border-radius: 16px;
+  font-size: 12px;
+  cursor: pointer;
+  min-height: 32px;
+}
+
+.exampleChip:active {
+  background: var(--secondary-bg);
+}
+
+.recList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.reason {
+  font-size: 12px;
+  color: var(--btn-bg);
+  margin: 0;
+  font-style: italic;
+  line-height: 1.3;
+}

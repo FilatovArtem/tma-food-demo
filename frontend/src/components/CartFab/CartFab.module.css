@@ -1,0 +1,40 @@
+.fab {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  padding: 14px 20px;
+  background: var(--btn-bg);
+  color: var(--btn-text);
+  border: none;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
+  min-height: 52px;
+  transition: transform 150ms ease, opacity 150ms ease;
+  z-index: 100;
+}
+
+.fab:active {
+  transform: scale(0.98);
+}
+
+.icon {
+  font-size: 20px;
+}
+
+.count {
+  flex: 1;
+  text-align: left;
+  font-weight: 500;
+}
+
+.total {
+  font-weight: 700;
+}

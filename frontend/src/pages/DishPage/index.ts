@@ -1,0 +1,1 @@
+export { DishPage } from './DishPage';

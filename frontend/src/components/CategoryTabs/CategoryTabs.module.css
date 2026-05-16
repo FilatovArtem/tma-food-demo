@@ -1,0 +1,35 @@
+.wrap {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 12px 16px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.wrap::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  border: none;
+  background: var(--secondary-bg);
+  color: var(--text);
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  min-height: 36px;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.tab:active {
+  opacity: 0.8;
+}
+
+.active {
+  background: var(--btn-bg);
+  color: var(--btn-text);
+}

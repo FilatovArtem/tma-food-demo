@@ -1,0 +1,54 @@
+.page {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 100vh;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 4px;
+  border-top: 1px solid var(--separator);
+}
+
+.totalLabel {
+  font-size: 15px;
+  color: var(--hint);
+}
+
+.totalValue {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.submit {
+  border: none;
+  padding: 14px 20px;
+  background: var(--btn-bg);
+  color: var(--btn-text);
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 52px;
+  margin-top: 8px;
+}
+
+.submit:active {
+  opacity: 0.85;
+}
