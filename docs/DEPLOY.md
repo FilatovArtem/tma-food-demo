@@ -1,14 +1,36 @@
 # DEPLOY — продакшен на nixos-home-server
 
-Пошаговая инструкция: от первого push на GitHub до работающего Mini App на `https://foodorder.95.165.71.0.nip.io`. Время: 20-30 минут (большая часть — ожидание Let's Encrypt + build).
+> **Статус на 2026-09-22: процедура не выполнена ни разу.** История Actions
+> репозитория — один автоматический запуск «Dependency Graph Update»; запусков
+> job'а `Deploy to nixos-home-server` — ноль. `workflow_dispatch` присутствует
+> в `deploy.yml`, то есть ручной запуск был технически возможен и им тоже не
+> воспользовались — дело не только в триггере. До 2026-09-22 push-триггер
+> дополнительно был битым: целился в ветку `main`, которой в репозитории нет
+> (единственная и дефолтная ветка — `feat/foodorder-mvp`); это починено, но
+> без реального прогона на сервере с живыми secrets проверить конец в конец
+> нельзя — не проверено.
+>
+> Заявленный ниже адрес Mini App сейчас недоступен: `curl` на него падает на
+> TLS. Всё, что в этом файле помечено как «Проверка» / «Ожидание» — это
+> описание того, что ДОЛЖНО произойти при выполнении шагов, а не подтверждённый
+> факт. Ниже адрес сервера и домен заменены на `<SERVER_IP>` / `<YOUR_DOMAIN>`
+> — реальные значения подставляет владелец при выполнении (они уже видны в
+> истории коммитов `735aaf7`/`396d60d`, так что это не попытка скрыть их
+> задним числом, а просто отказ повторять их здесь как рабочий публичный факт).
 
-Архитектура:
+Пошаговая инструкция: от push на GitHub до Mini App, доступного по
+`https://<YOUR_DOMAIN>` — при условии, что все шаги ниже выполнены и
+задеплоено успешно. Ожидаемое время: 20-30 минут (большая часть — ожидание
+Let's Encrypt + build), тоже не измерено на практике.
+
+Архитектура (как задумано — куски `docker compose`/Caddy/Xray подтверждены
+чтением конфигов, полный путь end-to-end не прогонялся):
 
 ```
-GitHub push → main → GitHub Actions
+GitHub push → feat/foodorder-mvp → GitHub Actions
                        │
                        ▼ SSH (appleboy/ssh-action)
-                  nixos-home-server (admin@95.165.71.0:22)
+                  nixos-home-server (admin@<SERVER_IP>:22)
                        │
                        ▼ /home/admin/tma-food-demo/scripts/deploy.sh
                   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
@@ -23,7 +45,7 @@ GitHub push → main → GitHub Actions
                           │ Caddy 443 (Let's Encrypt) → 127.0.0.1:8080
                           │
                           ▼
-                  foodorder.95.165.71.0.nip.io
+                  <YOUR_DOMAIN>
                           ▲
                           │ Mini App URL (BotFather)
                           ▼
@@ -34,20 +56,19 @@ GitHub push → main → GitHub Actions
 
 ## 1. Подготовка GitHub репозитория
 
-### 1.1. Создать репо и запушить
+### 1.1. Репозиторий и ветка
+
+Репозиторий уже создан и запушен, дефолтная ветка на GitHub —
+`feat/foodorder-mvp`. Деплой триггерится **на push в `feat/foodorder-mvp`**
+(см. `.github/workflows/deploy.yml`).
+
+Переименование в `main` — по желанию, решение владельца:
 
 ```bash
-# Из локального tma-food-demo:
-gh repo create tma-food-demo --public --source=. --remote=origin
-git push -u origin feat/foodorder-mvp
-
-# Когда готов — merge в main:
-git checkout -b main
-git merge feat/foodorder-mvp
+git branch -m feat/foodorder-mvp main
 git push -u origin main
+# и вернуть branches: [main] в .github/workflows/deploy.yml
 ```
-
-Деплой триггерится **на push в `main`**.
 
 ### 1.2. Сгенерировать SSH-ключ для деплоя
 
@@ -73,7 +94,8 @@ ssh nixos-home-server 'chmod 600 ~/.ssh/authorized_keys'
 
 Проверка:
 ```bash
-ssh -i ~/.ssh/foodorder_deploy_key admin@95.165.71.0 'whoami && docker --version'
+ssh -i ~/.ssh/foodorder_deploy_key admin@<SERVER_IP> 'whoami && docker --version'
+# Ожидается:
 # → admin
 # → Docker version ...
 ```
@@ -81,7 +103,7 @@ ssh -i ~/.ssh/foodorder_deploy_key admin@95.165.71.0 'whoami && docker --version
 ### 1.4. Получить host fingerprint (для защиты от MITM в GHA)
 
 ```bash
-ssh-keyscan -t ed25519 95.165.71.0 2>/dev/null | ssh-keygen -lf - | awk '{print $2}'
+ssh-keyscan -t ed25519 <SERVER_IP> 2>/dev/null | ssh-keygen -lf - | awk '{print $2}'
 # Пример вывода: SHA256:AbCdEfGhIjKlMnOpQrStUvWxYz0123456789
 ```
 
@@ -93,11 +115,14 @@ ssh-keyscan -t ed25519 95.165.71.0 2>/dev/null | ssh-keygen -lf - | awk '{print 
 
 | Имя | Значение |
 |-----|----------|
-| `DEPLOY_HOST` | `95.165.71.0` |
+| `DEPLOY_HOST` | `<SERVER_IP>` |
 | `DEPLOY_PORT` | `22` (можно не задавать — дефолт 22) |
 | `DEPLOY_USER` | `admin` |
 | `DEPLOY_SSH_KEY` | содержимое `~/.ssh/foodorder_deploy_key` (полностью, **с BEGIN/END строками**) |
 | `DEPLOY_HOST_FINGERPRINT` | значение из шага 1.4 |
+
+Ни один из этих secrets на 2026-09-22 не проверялся — не проверено, реальных
+значений у меня нет и быть не должно (секреты не в git и не в отчётах).
 
 ---
 
@@ -129,13 +154,13 @@ mkdir -p /home/admin/tma-food-demo
 ```bash
 # Просмотри snippet
 cat /home/admin/tma-food-demo/nix/caddy-foodorder.nix.example
-# (после первого деплоя файл появится. Можно вставить заранее — содержимое в docs/DEPLOY.md ниже.)
+# (после первого деплоя файл появится. Можно вставить заранее — содержимое ниже.)
 ```
 
 Открыть `/home/admin/nixos/configuration.nix` и **добавить vhost** (admin редактирует файл без sudo):
 
 ```nix
-services.caddy.virtualHosts."foodorder.95.165.71.0.nip.io" = {
+services.caddy.virtualHosts."<YOUR_DOMAIN>" = {
   extraConfig = ''
     reverse_proxy 127.0.0.1:8080 {
       header_up X-Real-IP {remote_host}
@@ -152,26 +177,24 @@ sudo nixos-rebuild switch
 
 После rebuild Caddy сам получит Let's Encrypt cert через HTTP-01 challenge на порту 80 (роутер уже форвардит).
 
-Проверка:
+Ожидаемый результат (не проверено — деплой не выполнялся):
 ```bash
-curl -I https://foodorder.95.165.71.0.nip.io/
-# Ожидание (до того как frontend запущен):
-#   HTTP/2 502 — Caddy достучался, но 127.0.0.1:8080 не отвечает (это нормально до первого деплоя)
-# После деплоя:
-#   HTTP/2 200
+curl -I https://<YOUR_DOMAIN>/
+# До того как frontend запущен: HTTP/2 502 — Caddy достучался, но 127.0.0.1:8080 не отвечает (это нормально до первого деплоя)
+# После деплоя: HTTP/2 200
 ```
 
 ### 2.4. Проверить Xray прокси работает
 
 ```bash
 curl --max-time 5 -x http://127.0.0.1:10808 https://api.telegram.org/
-# Ожидание: HTTP 200 (Telegram отдаст HTML с описанием API)
+# Ожидается: HTTP 200 (Telegram отдаст HTML с описанием API)
 
 curl --max-time 5 -x http://127.0.0.1:10808 https://api.openai.com/v1/models
-# Ожидание: 401 "Invalid API key" — это значит прокси работает, OpenAI отвечает
+# Ожидается: 401 "Invalid API key" — это значит прокси работает, OpenAI отвечает
 ```
 
-Если не работает — починить Xray до продолжения. Из памяти: конфиг `/etc/xray/config.json`, перезапуск через `sudo systemctl restart xray`.
+Если не работает — починить Xray до продолжения. Конфиг `/etc/xray/config.json`, перезапуск через `sudo systemctl restart xray`.
 
 ---
 
@@ -198,13 +221,13 @@ BOT_TOKEN=1234567890:AAEhBP...
 ADMIN_CHAT_ID=123456789
 
 # Финальный публичный URL Mini App
-WEBAPP_URL=https://foodorder.95.165.71.0.nip.io
+WEBAPP_URL=https://<YOUR_DOMAIN>
 
 OPENAI_API_KEY=sk-proj-...
 OPENAI_MODEL=gpt-4o-mini
 
 # CORS — добавить наш домен
-CORS_ORIGINS=https://web.telegram.org,https://foodorder.95.165.71.0.nip.io
+CORS_ORIGINS=https://web.telegram.org,https://<YOUR_DOMAIN>
 
 # Остальное — дефолты
 DATABASE_URL=sqlite+aiosqlite:///./data/app.db
@@ -223,7 +246,7 @@ VITE_API_URL=/api
 
 - **Menu Button** → `Configure menu button`:
   - Text: `🍽 Меню`
-  - URL: `https://foodorder.95.165.71.0.nip.io`
+  - URL: `https://<YOUR_DOMAIN>`
 
 - (опционально) **Configure Mini App**:
   - URL: тот же
@@ -234,51 +257,53 @@ VITE_API_URL=/api
 
 ## 5. Первый деплой
 
-Просто push в main:
+Push в `feat/foodorder-mvp` (или в `main`, если ветка переименована и триггер обновлён):
 
 ```bash
-git push origin main
+git push origin feat/foodorder-mvp
 ```
 
-GitHub Actions запустится автоматически. В UI Actions:
+GitHub Actions должен запуститься автоматически — на 2026-09-22 это не
+проверено ни разу. В UI Actions ожидается:
 - → Deploy to nixos-home-server → SSH deploy
-- Логи покажут: clone → fetch → build → up -d → health check → status
+- Логи должны показать: clone → fetch → build → up -d → health check → status
 
-Сборка docker-образов идёт **на сервере** (не в GHA) — занимает 3-5 минут первый раз, потом cached.
+Сборка docker-образов задумана **на сервере** (не в GHA) — ожидается 3-5 минут первый раз, потом cached. Не измерено.
 
-После успешного завершения:
+После успешного завершения ожидается:
 ```bash
 ssh nixos-home-server
 cd /home/admin/tma-food-demo
 docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
-# Все три сервиса: backend, frontend, bot — в state Up
+# Ожидается: все три сервиса (backend, frontend, bot) в state Up
 ```
 
-Проверки:
+Ожидаемые проверки (ни одна не выполнялась):
 ```bash
 # С сервера:
 curl http://127.0.0.1:8000/api/health
-# → {"status":"ok","db":"ok"}
+# Ожидается: {"status":"ok","db":"ok"}
 
 curl http://127.0.0.1:8080/ -I
-# → HTTP/1.1 200 OK
+# Ожидается: HTTP/1.1 200 OK
 
 # С локалки/телефона:
-curl https://foodorder.95.165.71.0.nip.io/api/health
-# → {"status":"ok","db":"ok"}
+curl https://<YOUR_DOMAIN>/api/health
+# Ожидается: {"status":"ok","db":"ok"}
 ```
 
-В Telegram открыть бота → `/start` → жмём «🍽 Открыть меню» → Mini App открывается.
+В Telegram открыть бота → `/start` → жмём «🍽 Открыть меню» → должен открыться Mini App.
 
 ---
 
 ## 6. Последующие деплои
 
-Просто push в `main`. Дальше всё автоматически.
+Push в триггерную ветку (см. §1.1). Дальше — автоматически, если workflow
+однажды отработал успешно; это пока не подтверждено ни одним реальным прогоном.
 
-Откат: создать revert-commit + push, GHA откатит деплой.
+Откат: создать revert-commit + push, GHA должен откатить деплой (не проверено).
 
-Ручной триггер: GitHub UI → Actions → Deploy → Run workflow (выберет main).
+Ручной триггер: GitHub UI → Actions → Deploy → Run workflow (выбрать ветку).
 
 ---
 
@@ -305,6 +330,9 @@ journalctl -u xray -f -n 50
 ---
 
 ## 8. Troubleshooting
+
+Ничего в этом разделе не встречалось на практике — деплой не запускался ни
+разу. Это предположения по конфигурации, а не журнал реальных инцидентов.
 
 ### GHA падает с `Permission denied (publickey)`
 - Проверь, что публичный ключ деплоя в `/home/admin/.ssh/authorized_keys` на сервере
@@ -336,26 +364,28 @@ journalctl -u xray -f -n 50
 
 ### Let's Encrypt не получил cert
 - `journalctl -u caddy -n 100` — ищи `tls challenge`
-- Возможные причины: домен не резолвится (для nip.io должен), порт 80 не доступен снаружи (роутер форвардит?), Caddy не запущен после rebuild
-- Проверка: `dig foodorder.95.165.71.0.nip.io` должен резолвить в `95.165.71.0`
+- Возможные причины: домен не резолвится, порт 80 не доступен снаружи (роутер форвардит?), Caddy не запущен после rebuild
+- Проверка: `dig <YOUR_DOMAIN>` должен резолвить в `<SERVER_IP>`
 
 ### Database persisted between deployments?
-- Да. `docker-compose.yml` использует named volume `sqlite-data` — переживает `down`/`up`/`build`
+- По конфигу — да: `docker-compose.yml` использует named volume `sqlite-data`, который переживает `down`/`up`/`build`. Не проверено на реальном деплое
 - Чтобы сбросить: `docker compose down -v` (удаляет volume!)
 
 ---
 
 ## 9. Безопасность production-deploy
 
-Что уже сделано:
-- SSH ключ только для деплоя (не главный admin-ключ)
+Что верно про сам файл `deploy.yml` (проверяется чтением, не выполнением):
+- SSH ключ только для деплоя (не главный admin-ключ) — по инструкции §1.2, использование зависит от владельца
 - Host fingerprint pinned в GHA — защита от MITM
 - `script_stop: true` — любая команда упала → деплой стопится, без частичного состояния
 - `concurrency:` — параллельные деплои не конфликтуют
-- `.env` с правами 600 на сервере, не уезжает в Git
-- Backend uvicorn слушает 127.0.0.1 (не 0.0.0.0) — снаружи доступен только через Caddy → nginx
-- CORS ограничен явным списком origins
-- Init data HMAC валидируется на каждом /api/* запросе
+- Backend uvicorn слушает 127.0.0.1 (не 0.0.0.0) в prod-конфиге — снаружи доступен только через Caddy → nginx (см. `docker-compose.prod.yml`)
+- CORS ограничен явным списком origins (по коду `backend/app`)
+- Init data HMAC валидируется на каждом /api/* запросе (покрыто тестами `backend/tests/test_init_data.py`)
+
+Что описано как намерение, но не подтверждено выполнением:
+- `.env` с правами 600 на сервере — так и должно быть по §3, но сам сервер и файл на нём не осматривались в рамках этой правки
 
 Что стоит добавить позже:
 - Rate-limiting на `/api/ai/recommend` (slowapi)
@@ -375,5 +405,7 @@ journalctl -u xray -f -n 50
 | Создание `/home/admin/tma-food-demo/.env` | секреты не должны в git/GHA | один раз; обновление при ротации |
 | BotFather Menu Button URL | вне сервера | один раз |
 | Создание OpenAI API key | вне сервера | один раз; ротация по необходимости |
+| Первый реальный прогон этого пайплайна | нужны live secrets и доступ к серверу | до того, как называть деплой рабочим |
 
-Всё остальное — `git push origin main` и подожди 3-5 минут.
+Всё остальное — по идее `git push origin feat/foodorder-mvp` и несколько минут
+ожидания, но это утверждение о процедуре, а не о подтверждённом результате.
