@@ -3,8 +3,9 @@ name: Deploy to nixos-home-server
 on:
   push:
     # Repo has no `main` — `feat/foodorder-mvp` is the actual default branch.
-    # Rename the branch to `main` later? Flip this back and drop the env
-    # override below; github.ref_name will still do the right thing meanwhile.
+    # Rename the branch to `main` later? Flip this list back to [main] only.
+    # Keep the DEPLOY_BRANCH env override below either way — it fixes a
+    # separate bug (see its own comment).
     branches: [feat/foodorder-mvp]
   workflow_dispatch:
 
