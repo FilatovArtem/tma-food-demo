@@ -85,17 +85,23 @@ cd backend && uv venv && uv pip install -e ".[dev]" && pytest -v
 docker compose exec backend pytest -v
 ```
 
-Frontend type-check:
+Bot (7 тестов: /start, резолв прокси):
 
 ```bash
-cd frontend && npm install && npm run type-check
+cd bot && uv venv && uv pip install -e ".[dev]" && pytest -v
+```
+
+Frontend (21 тест vitest: корзина, API-клиент, CatalogPage) и type-check:
+
+```bash
+cd frontend && npm install && npm test && npm run type-check
 ```
 
 ## 🚢 Production deploy
 
-Авто-деплой на homelab NixOS-сервер через GitHub Actions:
+Авто-деплой на homelab NixOS-сервер через GitHub Actions. Ни разу не запускался, статус - в начале [docs/DEPLOY.md](docs/DEPLOY.md):
 
-- push в `main` → GHA SSH-деплой → `docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build`
+- push в `feat/foodorder-mvp` (ветка по умолчанию) → GHA SSH-деплой → `docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build`
 - Caddy на сервере: HTTPS reverse-proxy с Let's Encrypt
 - Xray HTTP-proxy для обхода RU-блокировок Telegram/OpenAI
 - Host network mode для backend/bot + bound to 127.0.0.1 (доступ только через Caddy)
